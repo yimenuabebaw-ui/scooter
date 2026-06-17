@@ -11,7 +11,7 @@ export const app = express();
 
 app.use(
   cors({
-    origin: env.corsOrigin,
+    origin: ["http://localhost:3000", "https://scooter-web.vercel.app"],
     credentials: true
   })
 );
