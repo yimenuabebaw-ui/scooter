@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 32 33% 97%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --primary: 24 95% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 36 100% 95%;
+    --secondary-foreground: 25 70% 22%;
+    --muted: 210 32% 94%;
+    --muted-foreground: 215 16% 40%;
+    --accent: 35 100% 93%;
+    --accent-foreground: 25 70% 22%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 214 20% 85%;
+    --input: 214 20% 85%;
+    --ring: 24 95% 53%;
+    --radius: 1rem;
+  }
+
+  .dark {
+    --background: 222 47% 7%;
+    --foreground: 210 40% 96%;
+    --card: 222 42% 11%;
+    --card-foreground: 210 40% 96%;
+    --primary: 27 96% 61%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 223 34% 16%;
+    --secondary-foreground: 210 40% 96%;
+    --muted: 223 34% 14%;
+    --muted-foreground: 216 15% 70%;
+    --accent: 221 39% 15%;
+    --accent-foreground: 210 40% 96%;
+    --destructive: 0 63% 49%;
+    --destructive-foreground: 210 40% 96%;
+    --border: 217 19% 22%;
+    --input: 217 19% 22%;
+    --ring: 27 96% 61%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+}
+
+@layer utilities {
+  .surface-fade {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0)),
+      rgba(255, 255, 255, 0.03);
+  }
+}
