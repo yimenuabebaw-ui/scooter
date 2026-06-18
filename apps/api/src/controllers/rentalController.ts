@@ -31,6 +31,11 @@ const historyQuerySchema = z.object({
   order: z.enum(["asc", "desc"]).optional()
 });
 
+const clearHistorySchema = z.object({
+  startDate: z.string().min(1),
+  endDate: z.string().min(1)
+});
+
 type RentalSnapshot = {
   _id: { toString(): string };
   status: "active" | "completed";
@@ -93,6 +98,32 @@ const serializeRental = (rental: RentalSnapshot | null) => {
 
 const loadRentalById = async (id: string) =>
   (await Rental.findById(id).populate("customerId").populate("scooterId", "scooterNumber model status")) as RentalSnapshot | null;
+
+const cleanupCustomerFrontIdIfUnused = async (customerId: string) => {
+  const customer = await Customer.findById(customerId);
+
+  if (!customer?.nationalIdFrontImage) {
+    return;
+  }
+
+  const hasRemainingRental = await Rental.exists({
+    customerId,
+    status: "completed"
+  });
+
+  if (hasRemainingRental) {
+    return;
+  }
+
+  const absolutePath = path.join(env.uploadDir, customer.nationalIdFrontImage);
+
+  if (fs.existsSync(absolutePath)) {
+    fs.unlinkSync(absolutePath);
+  }
+
+  customer.nationalIdFrontImage = "";
+  await customer.save();
+};
 
 export const createRental = async (req: Request, res: Response) => {
   const parsed = createRentalSchema.safeParse(req.body);
@@ -421,4 +452,52 @@ export const deleteCompletedRentalIds = async (req: Request, res: Response) => {
   }
 
   res.json({ deletedCount });
+};
+
+export const deleteHistoryRental = async (req: Request, res: Response) => {
+  const rental = await Rental.findById(String(req.params.id));
+
+  if (!rental || rental.status !== "completed") {
+    throw notFound("Completed rental not found");
+  }
+
+  const customerId = String(rental.customerId);
+  await rental.deleteOne();
+  await cleanupCustomerFrontIdIfUnused(customerId);
+
+  res.status(204).send();
+};
+
+export const clearHistoryByDateRange = async (req: Request, res: Response) => {
+  const parsed = clearHistorySchema.safeParse(req.body);
+
+  if (!parsed.success) {
+    throw badRequest("Valid startDate and endDate are required", parsed.error.flatten());
+  }
+
+  const startDate = new Date(parsed.data.startDate);
+  const endDate = new Date(parsed.data.endDate);
+  endDate.setHours(23, 59, 59, 999);
+
+  const rentals = await Rental.find({
+    status: "completed",
+    endTime: {
+      $gte: startDate,
+      $lte: endDate
+    }
+  });
+
+  const customerIds = [...new Set(rentals.map((rental) => String(rental.customerId)))];
+
+  if (rentals.length > 0) {
+    await Rental.deleteMany({
+      _id: { $in: rentals.map((rental) => rental._id) }
+    });
+  }
+
+  for (const customerId of customerIds) {
+    await cleanupCustomerFrontIdIfUnused(customerId);
+  }
+
+  res.json({ deletedCount: rentals.length });
 };

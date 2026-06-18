@@ -35,6 +35,10 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
   const [cleanupDays, setCleanupDays] = useState("30");
   const [cleanupLoading, setCleanupLoading] = useState(false);
+  const [clearStartDate, setClearStartDate] = useState("");
+  const [clearEndDate, setClearEndDate] = useState("");
+  const [clearHistoryLoading, setClearHistoryLoading] = useState(false);
+  const [deletingRentalId, setDeletingRentalId] = useState<string | null>(null);
 
   const loadHistory = async () => {
     setLoading(true);
@@ -86,6 +90,45 @@ export default function HistoryPage() {
     }
   };
 
+  const deleteHistoryRental = async (rentalId: string) => {
+    setDeletingRentalId(rentalId);
+    try {
+      await apiRequest(`/rentals/history/${rentalId}`, {
+        method: "DELETE"
+      });
+      toast.success("History item deleted");
+      await loadHistory();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to delete history item");
+    } finally {
+      setDeletingRentalId(null);
+    }
+  };
+
+  const clearHistoryByDateRange = async () => {
+    if (!clearStartDate || !clearEndDate) {
+      toast.error("Select both start and end dates");
+      return;
+    }
+
+    setClearHistoryLoading(true);
+    try {
+      const response = await apiRequest<{ deletedCount: number }>("/rentals/history", {
+        method: "DELETE",
+        body: {
+          startDate: clearStartDate,
+          endDate: clearEndDate
+        }
+      });
+      toast.success(`Deleted ${response.deletedCount} history item${response.deletedCount === 1 ? "" : "s"}`);
+      await loadHistory();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to clear history");
+    } finally {
+      setClearHistoryLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6 sm:space-y-8">
       <PageHeader
@@ -112,29 +155,48 @@ export default function HistoryPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardContent className="flex flex-col gap-4 p-4 sm:p-5 md:flex-row md:items-end md:justify-between">
-          <div className="space-y-2">
-            <p className="font-medium">Delete old front ID images</p>
-            <p className="text-sm text-muted-foreground">
-              Remove stored front ID files from completed rentals that ended at least this many days ago.
-            </p>
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Input
-              type="number"
-              min="1"
-              value={cleanupDays}
-              onChange={(event) => setCleanupDays(event.target.value)}
-              className="w-full sm:w-32"
-            />
-            <Button className="w-full sm:w-auto" variant="destructive" onClick={() => void cleanupOldIds()} disabled={cleanupLoading}>
-              {cleanupLoading ? <Spinner /> : <Trash2 className="h-4 w-4" />}
-              Delete Old IDs
+      <div className="grid gap-4 xl:grid-cols-2">
+        <Card>
+          <CardContent className="flex flex-col gap-4 p-4 sm:p-5">
+            <div className="space-y-2">
+              <p className="font-medium">Clear history by date range</p>
+              <p className="text-sm text-muted-foreground">Delete completed rental history items whose end date falls within the selected range.</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Input type="date" value={clearStartDate} onChange={(event) => setClearStartDate(event.target.value)} />
+              <Input type="date" value={clearEndDate} onChange={(event) => setClearEndDate(event.target.value)} />
+            </div>
+            <Button className="w-full sm:w-auto" variant="destructive" onClick={() => void clearHistoryByDateRange()} disabled={clearHistoryLoading}>
+              {clearHistoryLoading ? <Spinner /> : <Trash2 className="h-4 w-4" />}
+              Clear History
             </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="flex flex-col gap-4 p-4 sm:p-5 md:justify-between">
+            <div className="space-y-2">
+              <p className="font-medium">Delete old front ID images</p>
+              <p className="text-sm text-muted-foreground">
+                Remove stored front ID files from completed rentals that ended at least this many days ago.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Input
+                type="number"
+                min="1"
+                value={cleanupDays}
+                onChange={(event) => setCleanupDays(event.target.value)}
+                className="w-full sm:w-32"
+              />
+              <Button className="w-full sm:w-auto" variant="destructive" onClick={() => void cleanupOldIds()} disabled={cleanupLoading}>
+                {cleanupLoading ? <Spinner /> : <Trash2 className="h-4 w-4" />}
+                Delete Old IDs
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {loading ? (
         <div className="flex min-h-[30vh] items-center justify-center">
@@ -181,16 +243,28 @@ export default function HistoryPage() {
                         <p className="mt-1">{formatDateTime(rental.endTime)}</p>
                       </div>
                     </div>
-                    <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="mt-4 flex flex-col gap-2">
                       <p className="font-medium">{formatCurrency(rental.totalPrice)}</p>
-                      {rental.nationalIdFrontImage ? (
-                        <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => void downloadDocument(rental.id)}>
-                          <Download className="h-4 w-4" />
-                          Download
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        {rental.nationalIdFrontImage ? (
+                          <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => void downloadDocument(rental.id)}>
+                            <Download className="h-4 w-4" />
+                            Download
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Deleted</span>
+                        )}
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="w-full sm:w-auto"
+                          onClick={() => void deleteHistoryRental(rental.id)}
+                          disabled={deletingRentalId === rental.id}
+                        >
+                          {deletingRentalId === rental.id ? <Spinner /> : <Trash2 className="h-4 w-4" />}
+                          Delete
                         </Button>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">Deleted</span>
-                      )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -206,6 +280,7 @@ export default function HistoryPage() {
                       <th className="px-4 py-3 font-medium">Duration</th>
                       <th className="px-4 py-3 font-medium">Total</th>
                       <th className="px-4 py-3 font-medium">ID Front</th>
+                      <th className="px-4 py-3 font-medium">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -232,6 +307,17 @@ export default function HistoryPage() {
                           ) : (
                             <span className="text-xs text-muted-foreground">Deleted</span>
                           )}
+                        </td>
+                        <td className="px-4 py-4">
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => void deleteHistoryRental(rental.id)}
+                            disabled={deletingRentalId === rental.id}
+                          >
+                            {deletingRentalId === rental.id ? <Spinner /> : <Trash2 className="h-4 w-4" />}
+                            Delete
+                          </Button>
                         </td>
                       </tr>
                     ))}
