@@ -47,7 +47,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <PageHeader
         eyebrow="Pricing"
         title="Pricing configuration"
@@ -59,7 +59,7 @@ export default function SettingsPage() {
           <Spinner className="h-6 w-6" />
         </div>
       ) : (
-        <Card className="max-w-3xl">
+        <Card className="w-full max-w-3xl">
           <CardHeader>
             <CardTitle>Rental pricing</CardTitle>
           </CardHeader>

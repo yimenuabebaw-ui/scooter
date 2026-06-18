@@ -169,7 +169,7 @@ export default function RentalsPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <PageHeader
         eyebrow="Live Trips"
         title="Customer and rental management"
@@ -182,7 +182,7 @@ export default function RentalsPage() {
                 Create Rental
               </Button>
             </DialogTrigger>
-            <DialogContent className="w-[min(94vw,48rem)]">
+            <DialogContent className="sm:w-[min(94vw,48rem)]">
               <DialogHeader>
                 <DialogTitle>Start rental</DialogTitle>
                 <DialogDescription>Upload the customer front ID image, select an available scooter, and begin the trip.</DialogDescription>
@@ -204,7 +204,7 @@ export default function RentalsPage() {
           }
         }}
       >
-        <DialogContent className="w-[min(96vw,64rem)]">
+        <DialogContent className="sm:w-[min(96vw,64rem)]">
           <DialogHeader>
             <DialogTitle>ID Preview</DialogTitle>
             <DialogDescription>{viewerTitle || "Customer ID front image"}</DialogDescription>
@@ -216,9 +216,9 @@ export default function RentalsPage() {
               </div>
             ) : viewerUrl ? (
               viewerType === "application/pdf" ? (
-                <iframe title="ID preview" src={viewerUrl} className="h-[70vh] w-full rounded-xl" />
+                <iframe title="ID preview" src={viewerUrl} className="h-[58vh] w-full rounded-xl sm:h-[70vh]" />
               ) : (
-                <img src={viewerUrl} alt="National ID front" className="max-h-[70vh] w-full rounded-xl object-contain" />
+                <img src={viewerUrl} alt="National ID front" className="max-h-[58vh] w-full rounded-xl object-contain sm:max-h-[70vh]" />
               )
             ) : (
               <div className="flex min-h-[20rem] items-center justify-center text-sm text-muted-foreground">No preview available.</div>
@@ -244,7 +244,7 @@ export default function RentalsPage() {
 
             return (
               <Card key={rental.id}>
-                <CardHeader className="flex flex-row items-start justify-between gap-4">
+                <CardHeader className="flex flex-col items-start justify-between gap-4 sm:flex-row">
                   <div>
                     <CardTitle>{rental.customer.fullName}</CardTitle>
                     <p className="mt-2 text-sm text-muted-foreground">
@@ -254,7 +254,7 @@ export default function RentalsPage() {
                   <Badge tone="active">{isPaused ? "Paused" : statusLabelMap[rental.status]}</Badge>
                 </CardHeader>
                 <CardContent className="space-y-5">
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <div className="rounded-2xl border border-border/70 bg-background/55 p-4">
                       <p className="text-sm text-muted-foreground">Started</p>
                       <p className="mt-2 font-medium">{formatDateTime(rental.startTime)}</p>
@@ -278,23 +278,23 @@ export default function RentalsPage() {
                       Base {formatCurrency(rental.baseFee)} + {formatCurrency(rental.pricePerMinute)}/minute
                     </p>
                   </div>
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                     {isPaused ? (
-                      <Button variant="outline" onClick={() => void runAction(rental.id, "resume")} disabled={isProcessing}>
+                      <Button variant="outline" className="w-full sm:w-auto" onClick={() => void runAction(rental.id, "resume")} disabled={isProcessing}>
                         {isProcessing ? <Spinner /> : <Play className="h-4 w-4" />}
                         Resume
                       </Button>
                     ) : (
-                      <Button variant="outline" onClick={() => void runAction(rental.id, "pause")} disabled={isProcessing}>
+                      <Button variant="outline" className="w-full sm:w-auto" onClick={() => void runAction(rental.id, "pause")} disabled={isProcessing}>
                         {isProcessing ? <Spinner /> : <Pause className="h-4 w-4" />}
                         Pause
                       </Button>
                     )}
-                    <Button onClick={() => void runAction(rental.id, "complete")} disabled={isProcessing}>
+                    <Button className="w-full sm:w-auto" onClick={() => void runAction(rental.id, "complete")} disabled={isProcessing}>
                       {isProcessing ? <Spinner /> : <StopCircle className="h-4 w-4" />}
                       End Rental
                     </Button>
-                    <Button variant="ghost" onClick={() => void viewFrontId(rental)}>
+                    <Button variant="ghost" className="w-full sm:w-auto" onClick={() => void viewFrontId(rental)}>
                       <Download className="h-4 w-4" />
                       View ID Front
                     </Button>

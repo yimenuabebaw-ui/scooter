@@ -87,7 +87,7 @@ export default function HistoryPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <PageHeader
         eyebrow="History"
         title="Completed rentals"
@@ -95,7 +95,7 @@ export default function HistoryPage() {
       />
 
       <Card>
-        <CardContent className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-5">
+        <CardContent className="grid gap-4 p-4 sm:p-5 md:grid-cols-2 xl:grid-cols-5">
           <div className="relative">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -113,7 +113,7 @@ export default function HistoryPage() {
       </Card>
 
       <Card>
-        <CardContent className="flex flex-col gap-4 p-5 md:flex-row md:items-end md:justify-between">
+        <CardContent className="flex flex-col gap-4 p-4 sm:p-5 md:flex-row md:items-end md:justify-between">
           <div className="space-y-2">
             <p className="font-medium">Delete old front ID images</p>
             <p className="text-sm text-muted-foreground">
@@ -126,9 +126,9 @@ export default function HistoryPage() {
               min="1"
               value={cleanupDays}
               onChange={(event) => setCleanupDays(event.target.value)}
-              className="w-32"
+              className="w-full sm:w-32"
             />
-            <Button variant="destructive" onClick={() => void cleanupOldIds()} disabled={cleanupLoading}>
+            <Button className="w-full sm:w-auto" variant="destructive" onClick={() => void cleanupOldIds()} disabled={cleanupLoading}>
               {cleanupLoading ? <Spinner /> : <Trash2 className="h-4 w-4" />}
               Delete Old IDs
             </Button>
@@ -143,7 +143,7 @@ export default function HistoryPage() {
       ) : data && data.rentals.length > 0 ? (
         <>
           <Card>
-            <CardContent className="flex items-center justify-between gap-4 p-5">
+            <CardContent className="flex flex-col items-start justify-between gap-4 p-4 sm:flex-row sm:items-center sm:p-5">
               <div>
                 <p className="text-sm text-muted-foreground">Completed rental revenue</p>
                 <p className="mt-2 font-display text-3xl font-bold">{formatCurrency(data.totalRevenue)}</p>
@@ -152,48 +152,92 @@ export default function HistoryPage() {
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="overflow-x-auto p-0">
-              <table className="min-w-full text-left text-sm">
-                <thead className="bg-muted/50 text-muted-foreground">
-                  <tr>
-                    <th className="px-4 py-3 font-medium">Customer</th>
-                    <th className="px-4 py-3 font-medium">Scooter</th>
-                    <th className="px-4 py-3 font-medium">Start</th>
-                    <th className="px-4 py-3 font-medium">End</th>
-                    <th className="px-4 py-3 font-medium">Duration</th>
-                    <th className="px-4 py-3 font-medium">Total</th>
-                    <th className="px-4 py-3 font-medium">ID Front</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.rentals.map((rental) => (
-                    <tr key={rental.id} className="border-t border-border/60">
-                      <td className="px-4 py-4">
-                        <div className="font-medium">{rental.customerName}</div>
-                        <div className="text-xs text-muted-foreground">{rental.phoneNumber}</div>
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="font-medium">{rental.scooterNumber}</div>
-                        <Badge tone={rental.status}>{statusLabelMap[rental.status]}</Badge>
-                      </td>
-                      <td className="px-4 py-4">{formatDateTime(rental.startTime)}</td>
-                      <td className="px-4 py-4">{formatDateTime(rental.endTime)}</td>
-                      <td className="px-4 py-4">{formatMinutes(rental.durationMinutes)}</td>
-                      <td className="px-4 py-4">{formatCurrency(rental.totalPrice)}</td>
-                      <td className="px-4 py-4">
-                        {rental.nationalIdFrontImage ? (
-                          <Button variant="outline" size="sm" onClick={() => void downloadDocument(rental.id)}>
-                            <Download className="h-4 w-4" />
-                            Download
-                          </Button>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">Deleted</span>
-                        )}
-                      </td>
+            <CardContent className="p-0">
+              <div className="space-y-3 p-4 md:hidden">
+                {data.rentals.map((rental) => (
+                  <div key={rental.id} className="rounded-2xl border border-border/70 bg-background/55 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{rental.customerName}</p>
+                        <p className="text-xs text-muted-foreground">{rental.phoneNumber}</p>
+                      </div>
+                      <Badge tone={rental.status}>{statusLabelMap[rental.status]}</Badge>
+                    </div>
+                    <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Scooter</p>
+                        <p className="mt-1">{rental.scooterNumber}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Duration</p>
+                        <p className="mt-1">{formatMinutes(rental.durationMinutes)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Start</p>
+                        <p className="mt-1">{formatDateTime(rental.startTime)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">End</p>
+                        <p className="mt-1">{formatDateTime(rental.endTime)}</p>
+                      </div>
+                    </div>
+                    <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="font-medium">{formatCurrency(rental.totalPrice)}</p>
+                      {rental.nationalIdFrontImage ? (
+                        <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => void downloadDocument(rental.id)}>
+                          <Download className="h-4 w-4" />
+                          Download
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Deleted</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="hidden overflow-x-auto md:block">
+                <table className="min-w-full text-left text-sm">
+                  <thead className="bg-muted/50 text-muted-foreground">
+                    <tr>
+                      <th className="px-4 py-3 font-medium">Customer</th>
+                      <th className="px-4 py-3 font-medium">Scooter</th>
+                      <th className="px-4 py-3 font-medium">Start</th>
+                      <th className="px-4 py-3 font-medium">End</th>
+                      <th className="px-4 py-3 font-medium">Duration</th>
+                      <th className="px-4 py-3 font-medium">Total</th>
+                      <th className="px-4 py-3 font-medium">ID Front</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {data.rentals.map((rental) => (
+                      <tr key={rental.id} className="border-t border-border/60">
+                        <td className="px-4 py-4">
+                          <div className="font-medium">{rental.customerName}</div>
+                          <div className="text-xs text-muted-foreground">{rental.phoneNumber}</div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="font-medium">{rental.scooterNumber}</div>
+                          <Badge tone={rental.status}>{statusLabelMap[rental.status]}</Badge>
+                        </td>
+                        <td className="px-4 py-4">{formatDateTime(rental.startTime)}</td>
+                        <td className="px-4 py-4">{formatDateTime(rental.endTime)}</td>
+                        <td className="px-4 py-4">{formatMinutes(rental.durationMinutes)}</td>
+                        <td className="px-4 py-4">{formatCurrency(rental.totalPrice)}</td>
+                        <td className="px-4 py-4">
+                          {rental.nationalIdFrontImage ? (
+                            <Button variant="outline" size="sm" onClick={() => void downloadDocument(rental.id)}>
+                              <Download className="h-4 w-4" />
+                              Download
+                            </Button>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Deleted</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </CardContent>
           </Card>
         </>

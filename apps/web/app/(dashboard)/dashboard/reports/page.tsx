@@ -71,7 +71,7 @@ export default function ReportsPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <PageHeader
         eyebrow="Revenue"
         title="Reports and exports"
@@ -79,7 +79,7 @@ export default function ReportsPage() {
       />
 
       <Card>
-        <CardContent className="grid gap-4 p-5 md:grid-cols-[0.8fr_1fr_1fr_auto_auto]">
+        <CardContent className="grid gap-4 p-4 sm:p-5 md:grid-cols-2 xl:grid-cols-[0.8fr_1fr_1fr_auto_auto]">
           <Select value={preset} onValueChange={(value: "daily" | "monthly" | "custom") => setPreset(value)}>
             <SelectTrigger><SelectValue placeholder="Preset" /></SelectTrigger>
             <SelectContent>
@@ -90,11 +90,11 @@ export default function ReportsPage() {
           </Select>
           <Input type="date" value={startDate} onChange={(event) => setStartDate(event.target.value)} disabled={preset !== "custom"} />
           <Input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} disabled={preset !== "custom"} />
-          <Button variant="outline" onClick={() => void download("excel")} disabled={downloading !== null}>
+          <Button className="w-full xl:w-auto" variant="outline" onClick={() => void download("excel")} disabled={downloading !== null}>
             {downloading === "excel" ? <Spinner /> : <FileSpreadsheet className="h-4 w-4" />}
             Excel
           </Button>
-          <Button onClick={() => void download("pdf")} disabled={downloading !== null}>
+          <Button className="w-full xl:w-auto" onClick={() => void download("pdf")} disabled={downloading !== null}>
             {downloading === "pdf" ? <Spinner /> : <FileText className="h-4 w-4" />}
             PDF
           </Button>
@@ -107,7 +107,7 @@ export default function ReportsPage() {
         </div>
       ) : report ? (
         <>
-          <section className="grid gap-4 md:grid-cols-3">
+          <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <Card><CardContent className="p-5"><p className="text-sm text-muted-foreground">Revenue</p><p className="mt-2 font-display text-3xl font-bold">{formatCurrency(report.totalRevenue)}</p></CardContent></Card>
             <Card><CardContent className="p-5"><p className="text-sm text-muted-foreground">Rentals</p><p className="mt-2 font-display text-3xl font-bold">{report.rentalCount}</p></CardContent></Card>
             <Card><CardContent className="p-5"><p className="text-sm text-muted-foreground">Average Rental Value</p><p className="mt-2 font-display text-3xl font-bold">{formatCurrency(report.averageRentalValue)}</p></CardContent></Card>
@@ -124,35 +124,68 @@ export default function ReportsPage() {
               {report.rentals.length === 0 ? (
                 <EmptyState title="No completed rentals in range" description="Choose a different period or complete more rentals to generate report rows." />
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-left text-sm">
-                    <thead className="border-b border-border/70 text-muted-foreground">
-                      <tr>
-                        <th className="px-3 py-3 font-medium">Customer</th>
-                        <th className="px-3 py-3 font-medium">Scooter</th>
-                        <th className="px-3 py-3 font-medium">Start</th>
-                        <th className="px-3 py-3 font-medium">End</th>
-                        <th className="px-3 py-3 font-medium">Duration</th>
-                        <th className="px-3 py-3 font-medium">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {report.rentals.map((item, index) => (
-                        <tr key={`${item.customerName}-${index}`} className="border-b border-border/50 last:border-b-0">
-                          <td className="px-3 py-4">
-                            <div className="font-medium">{item.customerName}</div>
-                            <div className="text-xs text-muted-foreground">{item.phoneNumber}</div>
-                          </td>
-                          <td className="px-3 py-4">{item.scooterNumber}</td>
-                          <td className="px-3 py-4">{formatDateTime(item.startTime)}</td>
-                          <td className="px-3 py-4">{formatDateTime(item.endTime)}</td>
-                          <td className="px-3 py-4">{formatMinutes(item.durationMinutes)}</td>
-                          <td className="px-3 py-4">{formatCurrency(item.totalPrice)}</td>
+                <>
+                  <div className="space-y-3 md:hidden">
+                    {report.rentals.map((item, index) => (
+                      <div key={`${item.customerName}-${index}`} className="rounded-2xl border border-border/70 bg-background/55 p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate font-medium">{item.customerName}</p>
+                            <p className="text-xs text-muted-foreground">{item.phoneNumber}</p>
+                          </div>
+                          <p className="font-medium">{formatCurrency(item.totalPrice)}</p>
+                        </div>
+                        <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+                          <div>
+                            <p className="text-xs uppercase tracking-wide text-muted-foreground">Scooter</p>
+                            <p className="mt-1">{item.scooterNumber}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs uppercase tracking-wide text-muted-foreground">Duration</p>
+                            <p className="mt-1">{formatMinutes(item.durationMinutes)}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs uppercase tracking-wide text-muted-foreground">Start</p>
+                            <p className="mt-1">{formatDateTime(item.startTime)}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs uppercase tracking-wide text-muted-foreground">End</p>
+                            <p className="mt-1">{formatDateTime(item.endTime)}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="hidden overflow-x-auto md:block">
+                    <table className="min-w-full text-left text-sm">
+                      <thead className="border-b border-border/70 text-muted-foreground">
+                        <tr>
+                          <th className="px-3 py-3 font-medium">Customer</th>
+                          <th className="px-3 py-3 font-medium">Scooter</th>
+                          <th className="px-3 py-3 font-medium">Start</th>
+                          <th className="px-3 py-3 font-medium">End</th>
+                          <th className="px-3 py-3 font-medium">Duration</th>
+                          <th className="px-3 py-3 font-medium">Total</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {report.rentals.map((item, index) => (
+                          <tr key={`${item.customerName}-${index}`} className="border-b border-border/50 last:border-b-0">
+                            <td className="px-3 py-4">
+                              <div className="font-medium">{item.customerName}</div>
+                              <div className="text-xs text-muted-foreground">{item.phoneNumber}</div>
+                            </td>
+                            <td className="px-3 py-4">{item.scooterNumber}</td>
+                            <td className="px-3 py-4">{formatDateTime(item.startTime)}</td>
+                            <td className="px-3 py-4">{formatDateTime(item.endTime)}</td>
+                            <td className="px-3 py-4">{formatMinutes(item.durationMinutes)}</td>
+                            <td className="px-3 py-4">{formatCurrency(item.totalPrice)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>

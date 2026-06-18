@@ -44,7 +44,7 @@ export const SettingsForm = ({
 
   return (
     <form className="grid gap-5" onSubmit={submit}>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-2">
           <Label htmlFor="baseFee">Base Fee (ETB)</Label>
           <Input id="baseFee" type="number" min="0" value={baseFee} onChange={(event) => setBaseFee(event.target.value)} required />
@@ -63,11 +63,11 @@ export const SettingsForm = ({
       </div>
       <div className="rounded-2xl border border-border/70 bg-background/60 p-4 text-sm text-muted-foreground">
         <p className="font-semibold text-foreground">Current formula</p>
-        <p className="mt-2">Total Price = Base Fee + (Total Minutes × Price Per Minute)</p>
+        <p className="mt-2">Total Price = Base Fee + (Total Minutes x Price Per Minute)</p>
         <p className="mt-2">10 minutes: {formatCurrency(sample10)}</p>
         <p>25 minutes: {formatCurrency(sample25)}</p>
       </div>
-      <Button type="submit" disabled={submitting}>
+      <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
         {submitting ? <Spinner /> : null}
         Save Pricing
       </Button>

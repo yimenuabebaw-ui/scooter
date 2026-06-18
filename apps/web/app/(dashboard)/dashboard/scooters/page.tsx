@@ -112,7 +112,7 @@ export default function ScootersPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <PageHeader
         eyebrow="Fleet"
         title="Scooter management"
@@ -144,14 +144,14 @@ export default function ScootersPage() {
         }
       />
 
-      <section className="grid gap-4 md:grid-cols-3">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <Card><CardContent className="p-5"><p className="text-sm text-muted-foreground">Available</p><p className="mt-2 font-display text-3xl font-bold">{statusCounts.available}</p></CardContent></Card>
         <Card><CardContent className="p-5"><p className="text-sm text-muted-foreground">Rented</p><p className="mt-2 font-display text-3xl font-bold">{statusCounts.rented}</p></CardContent></Card>
         <Card><CardContent className="p-5"><p className="text-sm text-muted-foreground">Maintenance</p><p className="mt-2 font-display text-3xl font-bold">{statusCounts.maintenance}</p></CardContent></Card>
       </section>
 
       <Card>
-        <CardContent className="grid gap-4 p-5 md:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
+        <CardContent className="grid gap-4 p-4 sm:p-5 md:grid-cols-2 xl:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
           <div className="relative">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input className="pl-10" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search number or model" />
@@ -191,71 +191,133 @@ export default function ScootersPage() {
         <EmptyState title="No scooters found" description="Add the first scooter to start inventory tracking and rentals." />
       ) : (
         <Card>
-          <CardContent className="overflow-x-auto p-0">
-            <table className="min-w-full text-left text-sm">
-              <thead className="bg-muted/50 text-muted-foreground">
-                <tr>
-                  <th className="px-4 py-3 font-medium">Scooter</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 font-medium">Notes</th>
-                  <th className="px-4 py-3 font-medium">Updated</th>
-                  <th className="px-4 py-3 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {scooters.map((scooter) => (
-                  <tr key={scooter._id} className="border-t border-border/60">
-                    <td className="px-4 py-4">
-                      <div className="font-medium">{scooter.scooterNumber}</div>
-                      <div className="text-xs text-muted-foreground">{scooter.model}</div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <Badge tone={scooter.status}>{statusLabelMap[scooter.status]}</Badge>
-                    </td>
-                    <td className="max-w-md px-4 py-4 text-muted-foreground">{scooter.notes || "No notes"}</td>
-                    <td className="px-4 py-4">{formatDateTime(scooter.updatedAt)}</td>
-                    <td className="px-4 py-4">
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setEditing(scooter);
-                            setDialogOpen(true);
-                          }}
-                        >
-                          <SquarePen className="h-4 w-4" />
-                          Edit
+          <CardContent className="p-0">
+            <div className="space-y-3 p-4 md:hidden">
+              {scooters.map((scooter) => (
+                <div key={scooter._id} className="rounded-2xl border border-border/70 bg-background/55 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{scooter.scooterNumber}</p>
+                      <p className="text-xs text-muted-foreground">{scooter.model}</p>
+                    </div>
+                    <Badge tone={scooter.status}>{statusLabelMap[scooter.status]}</Badge>
+                  </div>
+                  <div className="mt-4 grid gap-3 text-sm">
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Notes</p>
+                      <p className="mt-1 break-words text-muted-foreground">{scooter.notes || "No notes"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Updated</p>
+                      <p className="mt-1">{formatDateTime(scooter.updatedAt)}</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full sm:w-auto"
+                      onClick={() => {
+                        setEditing(scooter);
+                        setDialogOpen(true);
+                      }}
+                    >
+                      <SquarePen className="h-4 w-4" />
+                      Edit
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                          <Trash2 className="h-4 w-4" />
+                          Delete
                         </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="sm">
-                              <Trash2 className="h-4 w-4" />
-                              Delete
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete scooter?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This removes {scooter.scooterNumber}. Scooters with active rentals cannot be deleted.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => void deleteScooter(scooter._id)}>
-                                {deletingId === scooter._id ? <Spinner /> : null}
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </td>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete scooter?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This removes {scooter.scooterNumber}. Scooters with active rentals cannot be deleted.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => void deleteScooter(scooter._id)}>
+                            {deletingId === scooter._id ? <Spinner /> : null}
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="hidden overflow-x-auto md:block">
+              <table className="min-w-full text-left text-sm">
+                <thead className="bg-muted/50 text-muted-foreground">
+                  <tr>
+                    <th className="px-4 py-3 font-medium">Scooter</th>
+                    <th className="px-4 py-3 font-medium">Status</th>
+                    <th className="px-4 py-3 font-medium">Notes</th>
+                    <th className="px-4 py-3 font-medium">Updated</th>
+                    <th className="px-4 py-3 font-medium">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {scooters.map((scooter) => (
+                    <tr key={scooter._id} className="border-t border-border/60">
+                      <td className="px-4 py-4">
+                        <div className="font-medium">{scooter.scooterNumber}</div>
+                        <div className="text-xs text-muted-foreground">{scooter.model}</div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <Badge tone={scooter.status}>{statusLabelMap[scooter.status]}</Badge>
+                      </td>
+                      <td className="max-w-md px-4 py-4 text-muted-foreground">{scooter.notes || "No notes"}</td>
+                      <td className="px-4 py-4">{formatDateTime(scooter.updatedAt)}</td>
+                      <td className="px-4 py-4">
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setEditing(scooter);
+                              setDialogOpen(true);
+                            }}
+                          >
+                            <SquarePen className="h-4 w-4" />
+                            Edit
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <Trash2 className="h-4 w-4" />
+                                Delete
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete scooter?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This removes {scooter.scooterNumber}. Scooters with active rentals cannot be deleted.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => void deleteScooter(scooter._id)}>
+                                  {deletingId === scooter._id ? <Spinner /> : null}
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </CardContent>
         </Card>
       )}
