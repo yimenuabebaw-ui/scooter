@@ -1,12 +1,9 @@
-import fs from "fs";
-import path from "path";
 import { Request, Response } from "express";
 import { PipelineStage } from "mongoose";
 import { z } from "zod";
 import { Customer } from "../models/Customer";
 import { Rental } from "../models/Rental";
 import { Scooter } from "../models/Scooter";
-import { env } from "../config/env";
 import { calculateDurationMinutes, calculateTotalPrice } from "../services/pricing";
 import { getOrCreateSettings } from "../services/settingsService";
 import { badRequest, notFound } from "../utils/http";
@@ -49,9 +46,9 @@ type RentalSnapshot = {
   pausedDurationMs: number;
   paymentVerifiedAt?: Date | null;
   customerId: {
+    _id?: { toString(): string };
     fullName: string;
     phone: string;
-    nationalIdFrontImage: string;
   };
   scooterId: {
     scooterNumber: string;
@@ -97,12 +94,12 @@ const serializeRental = (rental: RentalSnapshot | null) => {
 };
 
 const loadRentalById = async (id: string) =>
-  (await Rental.findById(id).populate("customerId").populate("scooterId", "scooterNumber model status")) as RentalSnapshot | null;
+  (await Rental.findById(id).populate("customerId", "fullName phone").populate("scooterId", "scooterNumber model status")) as RentalSnapshot | null;
 
 const cleanupCustomerFrontIdIfUnused = async (customerId: string) => {
   const customer = await Customer.findById(customerId);
 
-  if (!customer?.nationalIdFrontImage) {
+  if (!customer?.nationalIdFrontImage?.filename) {
     return;
   }
 
@@ -115,13 +112,7 @@ const cleanupCustomerFrontIdIfUnused = async (customerId: string) => {
     return;
   }
 
-  const absolutePath = path.join(env.uploadDir, customer.nationalIdFrontImage);
-
-  if (fs.existsSync(absolutePath)) {
-    fs.unlinkSync(absolutePath);
-  }
-
-  customer.nationalIdFrontImage = "";
+  customer.nationalIdFrontImage = null;
   await customer.save();
 };
 
@@ -168,7 +159,11 @@ export const createRental = async (req: Request, res: Response) => {
     {
       fullName: parsed.data.fullName,
       phone: parsed.data.phone,
-      nationalIdFrontImage: frontImage.filename
+      nationalIdFrontImage: {
+        data: frontImage.buffer,
+        contentType: frontImage.mimetype,
+        filename: frontImage.originalname
+      }
     },
     {
       new: true,
@@ -202,7 +197,7 @@ export const createRental = async (req: Request, res: Response) => {
 export const listActiveRentals = async (_req: Request, res: Response) => {
   const rentals = (await Rental.find({ status: "active" })
     .sort({ startTime: -1 })
-    .populate("customerId", "fullName phone nationalIdFrontImage")
+    .populate("customerId", "fullName phone")
     .populate("scooterId", "scooterNumber model status")) as unknown as RentalSnapshot[];
 
   res.json(rentals.map((rental) => serializeRental(rental)));
@@ -380,7 +375,7 @@ export const listRentalHistory = async (req: Request, res: Response) => {
       durationMinutes: rental.durationMinutes,
       totalPrice: rental.totalPrice,
       status: rental.status,
-      nationalIdFrontImage: Boolean(rental.customer.nationalIdFrontImage)
+      nationalIdFrontImage: Boolean(rental.customer.nationalIdFrontImage?.filename)
     })),
     totalRevenue
   });
@@ -394,23 +389,22 @@ export const streamRentalDocument = async (req: Request, res: Response) => {
   }
 
   const customer = rental.customerId as unknown as {
-    nationalIdFrontImage: string;
+    nationalIdFrontImage?: {
+      data: Buffer;
+      contentType: string;
+      filename: string;
+    } | null;
   };
-  const filename = customer.nationalIdFrontImage;
+  const image = customer.nationalIdFrontImage;
 
-  if (!filename) {
+  if (!image?.data || !image.contentType || !image.filename) {
     throw notFound("Document not found");
   }
 
-  const absolutePath = path.join(env.uploadDir, filename);
-
-  if (!fs.existsSync(absolutePath)) {
-    throw notFound("Stored document file not found");
-  }
-
   const download = String(req.query.download ?? "") === "1";
-  res.setHeader("Content-Disposition", `${download ? "attachment" : "inline"}; filename="${filename}"`);
-  res.sendFile(absolutePath);
+  res.setHeader("Content-Type", image.contentType);
+  res.setHeader("Content-Disposition", `${download ? "attachment" : "inline"}; filename="${image.filename}"`);
+  res.send(image.data);
 };
 
 export const deleteCompletedRentalIds = async (req: Request, res: Response) => {
@@ -429,23 +423,22 @@ export const deleteCompletedRentalIds = async (req: Request, res: Response) => {
   let deletedCount = 0;
 
   for (const rental of rentals) {
-    const customer = rental.customerId as unknown as { _id: string; nationalIdFrontImage?: string };
-    const filename = customer.nationalIdFrontImage;
+    const customer = rental.customerId as unknown as {
+      _id: string;
+      nationalIdFrontImage?: {
+        filename?: string;
+      } | null;
+    };
+    const filename = customer.nationalIdFrontImage?.filename;
 
     if (!filename) {
       continue;
     }
 
-    const absolutePath = path.join(env.uploadDir, filename);
-
-    if (fs.existsSync(absolutePath)) {
-      fs.unlinkSync(absolutePath);
-    }
-
     await Customer.updateOne(
       { _id: customer._id },
       {
-        $set: { nationalIdFrontImage: "" }
+        $set: { nationalIdFrontImage: null }
       }
     );
     deletedCount += 1;

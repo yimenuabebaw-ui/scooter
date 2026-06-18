@@ -7,7 +7,7 @@ Internal admin system for managing scooters, rentals, pricing, revenue, and cust
 - Frontend: Next.js App Router, TypeScript, Tailwind CSS, shadcn-style UI primitives
 - Backend: Node.js, Express.js, JWT authentication
 - Database: MongoDB with Mongoose
-- Storage: Local file uploads for national ID images
+- Storage: National ID images stored in MongoDB
 
 ## Structure
 
@@ -48,7 +48,7 @@ npm run dev
 
 - The API seeds a default pricing document if none exists.
 - The API seeds the first admin account from environment variables if the `admins` collection is empty.
-- National ID uploads are stored in `apps/api/uploads/ids`.
+- National ID uploads are stored in MongoDB instead of the server filesystem.
 
 ## Main features
 

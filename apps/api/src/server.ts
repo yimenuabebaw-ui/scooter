@@ -1,14 +1,9 @@
-import fs from "fs";
 import { app } from "./app";
 import { connectDatabase } from "./config/db";
 import { env } from "./config/env";
 import { seedDefaults } from "./services/bootstrap";
 
 const start = async () => {
-  if (!fs.existsSync(env.uploadDir)) {
-    fs.mkdirSync(env.uploadDir, { recursive: true });
-  }
-
   await connectDatabase();
   await seedDefaults();
 

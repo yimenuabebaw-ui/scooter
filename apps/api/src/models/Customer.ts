@@ -1,5 +1,25 @@
 import mongoose, { InferSchemaType, Model } from "mongoose";
 
+const nationalIdImageSchema = new mongoose.Schema(
+  {
+    data: {
+      type: Buffer,
+      required: true
+    },
+    contentType: {
+      type: String,
+      required: true
+    },
+    filename: {
+      type: String,
+      required: true
+    }
+  },
+  {
+    _id: false
+  }
+);
+
 const customerSchema = new mongoose.Schema(
   {
     fullName: {
@@ -13,8 +33,8 @@ const customerSchema = new mongoose.Schema(
       trim: true
     },
     nationalIdFrontImage: {
-      type: String,
-      required: true
+      type: nationalIdImageSchema,
+      default: null
     }
   },
   {
